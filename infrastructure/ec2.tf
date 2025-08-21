@@ -68,7 +68,7 @@ resource "aws_instance" "Observability_instance" {
   # user_data                   = file("${path.module}/user_data.sh")
   associate_public_ip_address = true
   tags = {
-    Name = "smart-receipt-ec2-instance"
+    Name = "observability_instance"
   }
 }
 
