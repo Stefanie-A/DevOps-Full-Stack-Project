@@ -26,9 +26,9 @@ jobs:
             host: ${{ secrets.EC2_HOST }}
             username: ${{ secrets.EC2_USERNAME }}
             key: ${{ secrets.EC2_PRIVATE_KEY }}
-            script: |
-                sudo su
-                sudo apt-get update -y
-                sudo apt-get install -y git nodejs npm
+            script: |    
+              chmod +x script.sh
+              ./script.sh
+                  
              
             
