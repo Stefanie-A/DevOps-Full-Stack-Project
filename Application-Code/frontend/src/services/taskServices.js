@@ -1,5 +1,5 @@
 import axios from "axios";
-const apiUrl = "http://localhost:3500/api/tasks";
+const apiUrl = "/api/tasks";
 // const apiUrl = process.env.REACT_APP_BACKEND_URL //"http://localhost:8080/api/tasks";
 console.log(apiUrl)
 export function getTasks() {
@@ -17,3 +17,4 @@ export function updateTask(id, task) {
 export function deleteTask(id) {
     return axios.delete(apiUrl + "/" + id);
 }
+
