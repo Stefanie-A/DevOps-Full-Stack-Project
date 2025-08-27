@@ -1,4 +1,4 @@
-name: cd pipeline
+name: ci pipeline
 on:
     workflow_dispatch:
 
@@ -20,14 +20,14 @@ jobs:
             password: ${{ secrets.DOCKERHUB_TOKEN }}
 
         - name: Docker Build Backend and push to docker hub
-          working-directory: ./Application-code/Backend
+          working-directory: ./Application-Code/Backend
           run: |
             docker build -t app-backend .
             docker tag app-backend:latest stefnie/app-backend:latest
             docker push stefnie/app-backend:latest
            
         - name: Docker Build Frontend and push to docker hub
-          working-directory: ./Application-code/Frontend
+          working-directory: ./Application-Code/Frontend
           run: |
             docker build -t app-frontend .
             docker tag app-frontend:latest stefnie/app-frontend:latest
