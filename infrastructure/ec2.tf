@@ -21,12 +21,25 @@ data "aws_ami" "ubuntu" {
 resource "aws_instance" "ec2_instance" {
   ami             = data.aws_ami.ubuntu.id
   instance_type   = var.instance_type
-  key_name        = var.key_name
+  key_name        = aws_key_pair.ssh-key.key_name
   security_groups = [aws_security_group.ec2_sg.id]
   subnet_id       = aws_subnet.public_subnet[0].id
-  # user_data       = file("${path.module}/user_data.sh")
+  user_data = <<-EOF
+    #!/bin/bash
+    sudo su
+    sudo apt update -y
+    sudo apt upgrade -y
+    sudo apt install nginx -y
+    sudo systemctl start nginx
+    sudo apt install -y docker.io
+    sudo systemctl start docker
+    sudo systemctl enable docker
+    sudo usermod -aG docker ubuntu
+    curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
+    sudo apt-get install -y nodejs
+  EOF
   tags = {
-    Name = "smart-receipt-ec2-instance"
+    Name = "kox"
   }
 }
 
@@ -60,11 +73,11 @@ resource "aws_security_group" "ec2_sg" {
 
 # Observability Instance
 resource "aws_instance" "Observability_instance" {
-  ami                         = data.aws_ami.ubuntu.id
-  instance_type               = var.instance_type
-  key_name                    = var.key_name
-  security_groups             = [aws_security_group.obs_sg.id]
-  subnet_id                   = aws_subnet.public_subnet[0].id
+  ami             = data.aws_ami.ubuntu.id
+  instance_type   = var.instance_type
+  key_name        = aws_key_pair.ssh-key.key_name
+  security_groups = [aws_security_group.obs_sg.id]
+  subnet_id       = aws_subnet.public_subnet[0].id
   # user_data                   = file("${path.module}/user_data.sh")
   associate_public_ip_address = true
   tags = {
