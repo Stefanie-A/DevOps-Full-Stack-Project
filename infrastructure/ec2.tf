@@ -30,7 +30,6 @@ resource "aws_instance" "ec2_instance" {
     sudo apt update -y
     sudo apt upgrade -y
     sudo apt install nginx -y
-    sudo systemctl start nginx
     sudo apt install -y docker.io
     sudo systemctl start docker
     sudo systemctl enable docker
