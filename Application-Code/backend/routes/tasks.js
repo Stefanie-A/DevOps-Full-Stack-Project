@@ -1,25 +1,7 @@
 const express = require("express");
 const mongoose = require("mongoose");
-const Task = require("../models/task");
+const Task = require("../models/Task"); // make sure this path is correct
 const router = express.Router();
-
-// Utility: validate ObjectId
-function isValidObjectId(id) {
-  return mongoose.Types.ObjectId.isValid(id);
-}
-
-// Create task
-router.post("/", async (req, res) => {
-  try {
-    const { title, description, status } = req.body;
-    const task = new Task({ title, description, status });
-    await task.save();
-
-    res.status(201).json(task);
-  } catch (error) {
-    res.status(400).json({ error: error.message });
-  }
-});
 
 // Get all tasks
 router.get("/", async (req, res) => {
@@ -27,24 +9,41 @@ router.get("/", async (req, res) => {
     const tasks = await Task.find();
     res.json(tasks);
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ error: "Server error" });
   }
 });
 
-// Update task
+// Create a new task
+router.post("/", async (req, res) => {
+  try {
+      const newTask = new Task({
+      task: req.body.task,
+      completed: req.body.completed || false
+    });
+    await newTask.save();
+    res.status(201).json(newTask);
+  } catch (error) {
+    console.error("Create error:", error.message);
+    res.status(400).json({ error: error.message });
+  }
+});
+
+// Update a task
 router.put("/:id", async (req, res) => {
   try {
-    if (!isValidObjectId(req.params.id)) {
+    if (!mongoose.isValidObjectId(req.params.id)) {
       return res.status(400).json({ error: "Invalid task ID" });
     }
 
     const { title, description, status } = req.body;
-
-    // Only allow whitelisted fields
     const updateData = {};
     if (title !== undefined) updateData.title = title;
     if (description !== undefined) updateData.description = description;
     if (status !== undefined) updateData.status = status;
+
+    if (Object.keys(updateData).length === 0) {
+      return res.status(400).json({ error: "No valid fields provided for update" });
+    }
 
     const task = await Task.findByIdAndUpdate(
       req.params.id,
@@ -58,26 +57,8 @@ router.put("/:id", async (req, res) => {
 
     res.json(task);
   } catch (error) {
+    console.error("Update error:", error.message);
     res.status(400).json({ error: error.message });
-  }
-});
-
-// Delete task
-router.delete("/:id", async (req, res) => {
-  try {
-    if (!isValidObjectId(req.params.id)) {
-      return res.status(400).json({ error: "Invalid task ID" });
-    }
-
-    const task = await Task.findByIdAndDelete(req.params.id);
-
-    if (!task) {
-      return res.status(404).json({ error: "Task not found" });
-    }
-
-    res.json({ message: "Task deleted", task });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
   }
 });
 
