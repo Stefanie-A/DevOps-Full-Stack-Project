@@ -11,7 +11,10 @@ function isValidObjectId(id) {
 // Create task
 router.post("/", async (req, res) => {
   try {
-    const task = await new Task(req.body).save();
+    const { title, description, status } = req.body;
+    const task = new Task({ title, description, status });
+    await task.save();
+
     res.status(201).json(task);
   } catch (error) {
     res.status(400).json({ error: error.message });
@@ -55,7 +58,6 @@ router.put("/:id", async (req, res) => {
 
     res.json(task);
   } catch (error) {
-    console.error("Error updating task:", error);
     res.status(400).json({ error: error.message });
   }
 });
