@@ -1,6 +1,6 @@
-const Task = require("../models/task");
 const express = require("express");
 const mongoose = require("mongoose");
+const Task = require("../models/task");
 const router = express.Router();
 
 // Utility: validate ObjectId
@@ -46,8 +46,8 @@ router.put("/:id", async (req, res) => {
     if (description !== undefined) updateData.description = description;
     if (status !== undefined) updateData.status = status;
 
-    const task = await Task.findOneAndUpdate(
-      { _id: req.params.id },
+    const task = await Task.findByIdAndUpdate(
+      req.params.id,
       updateData,
       { new: true, runValidators: true }
     );
