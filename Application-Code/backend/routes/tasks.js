@@ -1,6 +1,6 @@
 const express = require("express");
 const mongoose = require("mongoose");
-const Task = require("../models/Task"); // make sure this path is correct
+const Task = require("../models/task"); // make sure this path is correct   C:\Users\user\Documents\full-stack-app\Application-Code\frontend\src\Tasks.js
 const router = express.Router();
 
 // Get all tasks
@@ -59,6 +59,24 @@ router.put("/:id", async (req, res) => {
   } catch (error) {
     console.error("Update error:", error.message);
     res.status(400).json({ error: error.message });
+  }
+});
+
+router.delete("/:id", async (req, res) => {
+  try {
+    if (!mongoose.isValidObjectId(req.params.id)) {
+      return res.status(400).json({ error: "Invalid task ID" });
+    }
+
+    const task = await Task.findByIdAndDelete(req.params.id);
+    if (!task) {
+      return res.status(404).json({ error: "Task not found" });
+    }
+
+    res.json({ message: "Task deleted" });
+  } catch (error) {
+    console.error("Delete error:", error.message);
+    res.status(500).json({ error: "Server error" });
   }
 });
 
