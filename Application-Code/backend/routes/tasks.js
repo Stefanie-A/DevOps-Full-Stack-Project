@@ -1,6 +1,12 @@
 const Task = require("../models/task");
 const express = require("express");
+const mongoose = require("mongoose");
 const router = express.Router();
+
+// Utility: validate ObjectId
+function isValidObjectId(id) {
+    return mongoose.Types.ObjectId.isValid(id);
+}
 
 router.post("/", async (req, res) => {
     try {
@@ -14,30 +20,56 @@ router.post("/", async (req, res) => {
 router.get("/", async (req, res) => {
     try {
         const tasks = await Task.find();
-        res.send(tasks);
+        res.json(tasks);
     } catch (error) {
-        res.send(error);
+        res.status(500).json({ error: error.message });
     }
 });
 
 router.put("/:id", async (req, res) => {
     try {
+        if (!isValidObjectId(req.params.id)) {
+            return res.status(400).json({ error: "Invalid task ID" });
+        }
+
+        // Only allow specific fields to be updated
+        const { title, description, status } = req.body;
+        const updateData = {};
+        if (title !== undefined) updateData.title = title;
+        if (description !== undefined) updateData.description = description;
+        if (status !== undefined) updateData.status = status;
+
         const task = await Task.findOneAndUpdate(
             { _id: req.params.id },
-            req.body
+            updateData,
+            { new: true, runValidators: true }
         );
-        res.send(task);
+
+        if (!task) {
+            return res.status(404).json({ error: "Task not found" });
+        }
+
+        res.json(task);
     } catch (error) {
-        res.send(error);
+        res.status(500).json({ error: error.message });
     }
 });
 
 router.delete("/:id", async (req, res) => {
     try {
+        if (!isValidObjectId(req.params.id)) {
+            return res.status(400).json({ error: "Invalid task ID" });
+        }
+
         const task = await Task.findByIdAndDelete(req.params.id);
-        res.send(task);
+
+        if (!task) {
+            return res.status(404).json({ error: "Task not found" });
+        }
+
+        res.json({ message: "Task deleted", task });
     } catch (error) {
-        res.send(error);
+        res.status(500).json({ error: error.message });
     }
 });
 
