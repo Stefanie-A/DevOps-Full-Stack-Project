@@ -38,7 +38,12 @@ resource "aws_instance" "ec2_instance" {
     sudo apt-get install -y nodejs
     npm install -g pm2
     sudo curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
-    sudo chmod +x /usr/local/bin/docker-compose   
+    sudo chmod +x /usr/local/bin/docker-compose
+    wget https://github.com/prometheus/node_exporter/releases/download/v1.7.0/node_exporter-1.7.0.linux-amd64.tar.gz
+    tar xvf node_exporter-1.7.0.linux-amd64.tar.gz
+    cd node_exporter-1.7.0.linux-amd64
+    ./node_exporter
+
 
   EOF
   tags = {
@@ -56,18 +61,30 @@ resource "aws_security_group" "ec2_sg" {
     protocol    = -1
     cidr_blocks = ["0.0.0.0/0"]
   }
+  
   ingress {
-    from_port   = 22
-    to_port     = 22
+    from_port   = 9100
+    to_port     = 9100
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"] #don't allow all ip address to ssh in prod
   }
-
   ingress {
     from_port   = 80
     to_port     = 80
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
+  }
+  ingress {
+    from_port   = 443
+    to_port     = 443
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+  ingress {
+    from_port   = 22
+    to_port     = 22
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"] #don't allow all ip address to ssh in prod
   }
   tags = {
     Name = "sr-security_group"
@@ -81,7 +98,16 @@ resource "aws_instance" "Observability_instance" {
   key_name        = aws_key_pair.ssh-key.key_name
   security_groups = [aws_security_group.obs_sg.id]
   subnet_id       = aws_subnet.public_subnet[0].id
-  # user_data                   = file("${path.module}/user_data.sh")
+  user_data                   = <<-EOF
+    sudo su
+    sudo apt update -y
+    sudo apt upgrade -y
+    wget https://github.com/prometheus/prometheus/releases/download/v2.52.0/prometheus-2.52.0.linux-amd64.tar.gz
+    tar xvf prometheus-2.52.0.linux-amd64.tar.gz
+    cd prometheus-2.52.0.linux-amd64
+
+
+  EOF
   associate_public_ip_address = true
   tags = {
     Name = "observability_instance"
@@ -106,8 +132,14 @@ resource "aws_security_group" "obs_sg" {
   }
 
   ingress {
-    from_port   = 80
-    to_port     = 80
+    from_port   = 9090
+    to_port     = 9090
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+  ingress {
+    from_port   = 3000
+    to_port     = 3000
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
   }
