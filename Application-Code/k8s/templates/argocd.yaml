@@ -8,7 +8,7 @@ spec:
   source:
     repoURL: https://github.com/Stefanie-A/DevOps-Full-Stack-Project.git
     targetRevision: main
-    path: k8s
+    path: ./Application-Code/k8s
   destination:
     server: https://kubernetes.default.svc
     namespace: my-app
