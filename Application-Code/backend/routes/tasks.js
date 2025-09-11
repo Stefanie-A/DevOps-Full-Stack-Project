@@ -1,6 +1,6 @@
 const express = require("express");
 const mongoose = require("mongoose");
-const Task = require("../models/task"); // make sure this path is correct   C:\Users\user\Documents\full-stack-app\Application-Code\frontend\src\Tasks.js
+const Task = require("../models/task"); // make sure this path is correct  
 const router = express.Router();
 
 // Get all tasks

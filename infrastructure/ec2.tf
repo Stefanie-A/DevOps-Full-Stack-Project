@@ -24,7 +24,7 @@ resource "aws_instance" "ec2_instance" {
   key_name        = aws_key_pair.ssh-key.key_name
   security_groups = [aws_security_group.ec2_sg.id]
   subnet_id       = aws_subnet.public_subnet[0].id
-  user_data = <<-EOF
+  user_data       = <<-EOF
     #!/bin/bash
     sudo su
     sudo apt update -y
@@ -40,10 +40,10 @@ resource "aws_instance" "ec2_instance" {
     npm install -g pm2
     sudo curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
     sudo chmod +x /usr/local/bin/docker-compose
+    cd /tmp
     wget https://github.com/prometheus/node_exporter/releases/download/v1.7.0/node_exporter-1.7.0.linux-amd64.tar.gz
     tar xvf node_exporter-1.7.0.linux-amd64.tar.gz
     cd node_exporter-1.7.0.linux-amd64
-    ./node_exporter
 
 
   EOF
@@ -62,10 +62,10 @@ resource "aws_security_group" "ec2_sg" {
     protocol    = -1
     cidr_blocks = ["0.0.0.0/0"]
   }
-  
+
   ingress {
-    from_port   = 9100
-    to_port     = 9100
+    from_port   = 3500
+    to_port     = 3500
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"] #don't allow all ip address to ssh in prod
   }
@@ -93,76 +93,61 @@ resource "aws_security_group" "ec2_sg" {
 }
 
 # Observability Instance
-resource "aws_instance" "Observability_instance" {
-  ami             = data.aws_ami.ubuntu.id
-  instance_type   = var.instance_type
-  key_name        = aws_key_pair.ssh-key.key_name
-  security_groups = [aws_security_group.obs_sg.id]
-  subnet_id       = aws_subnet.public_subnet[0].id
-  user_data                   = <<-EOF
-    sudo su
-    sudo apt update -y
-    sudo apt upgrade -y
-    sudo useradd --no-create-home --shell /bin/false prometheus
-    sudo mkdir /etc/prometheus
-    sudo mkdir /var/lib/prometheus
-    sudo chown prometheus:prometheus /var/lib/prometheus
-    wget https://github.com/prometheus/prometheus/releases/download/v2.53.1/prometheus-2.53.1.linux-amd64.tar.gz
-    tar xvf prometheus-2.53.1.linux-amd64.tar.gz
-    cd prometheus-2.53.1.linux-amd64
-    sudo mv prometheus /usr/local/bin/
-    sudo mv promtool /usr/local/bin/
-    sudo mv consoles /etc/prometheus
-    sudo mv console_libraries /etc/prometheus
-    sudo mv prometheus.yml /etc/prometheus
-    sudo chown -R prometheus:prometheus /etc/prometheus
-    sudo chown prometheus:prometheus /usr/local/bin/prometheus
-    sudo chown prometheus:prometheus /usr/local/bin/promtool
-    sudo apt-get install -y software-properties-common
-    sudo add-apt-repository "deb https://apt.grafana.com stable main"
-    wget -q -O - https://apt.grafana.com/gpg.key | sudo apt-key add -
-    sudo apt-get install grafana -y
-    sudo systemctl enable grafana-server
-    sudo systemctl start grafana-server
-    sudo systemctl status grafana-server
+# resource "aws_instance" "Observability_instance" {
+#   ami             = data.aws_ami.ubuntu.id
+#   instance_type   = var.instance_type
+#   key_name        = aws_key_pair.ssh-key.key_name
+#   security_groups = [aws_security_group.obs_sg.id]
+#   subnet_id       = aws_subnet.public_subnet[0].id
+#   user_data = <<-EOF
+#     sudo apt update -y
+#     sudo apt install wget tar -y
+#     wget https://github.com/prometheus/prometheus/releases/download/v2.52.0/prometheus-2.52.0.linux-amd64.tar.gz
+#     tar xvf prometheus-2.52.0.linux-amd64.tar.gz
+#     sudo apt-get install -y apt-transport-https software-properties-common wget
+#     wget -q -O - https://packages.grafana.com/gpg.key | sudo apt-key add -
+#     echo "deb https://packages.grafana.com/oss/deb stable main" | sudo tee /etc/apt/sources.list.d/grafana.list
+#     sudo add-apt-repository "deb https://apt.grafana.com stable main"
+#     sudo apt install grafana -y
+#     sudo systemctl enable grafana-server
+#     sudo systemctl start grafana-server
+#   EOF
+#   associate_public_ip_address = true
+#   tags = {
+#     Name = "observability_instance"
+#   }
+# }
 
-  EOF
-  associate_public_ip_address = true
-  tags = {
-    Name = "observability_instance"
-  }
-}
+# #security group
+# resource "aws_security_group" "obs_sg" {
+#   vpc_id = aws_vpc.main.id
 
-#security group
-resource "aws_security_group" "obs_sg" {
-  vpc_id = aws_vpc.main.id
+#   egress {
+#     from_port   = 0
+#     to_port     = 0
+#     protocol    = -1
+#     cidr_blocks = ["0.0.0.0/0"]
+#   }
+#   ingress {
+#     from_port   = 22
+#     to_port     = 22
+#     protocol    = "tcp"
+#     cidr_blocks = ["0.0.0.0/0"] #don't allow all ip address to ssh in prod
+#   }
 
-  egress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = -1
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-  ingress {
-    from_port   = 22
-    to_port     = 22
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"] #don't allow all ip address to ssh in prod
-  }
-
-  ingress {
-    from_port   = 9090
-    to_port     = 9090
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-  ingress {
-    from_port   = 3000
-    to_port     = 3000
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-  tags = {
-    Name = "obs-security_group"
-  }
-}
+#   ingress {
+#     from_port   = 9090
+#     to_port     = 9090
+#     protocol    = "tcp"
+#     cidr_blocks = ["0.0.0.0/0"]
+#   }
+#   ingress {
+#     from_port   = 3000
+#     to_port     = 3000
+#     protocol    = "tcp"
+#     cidr_blocks = ["0.0.0.0/0"]
+#   }
+#   tags = {
+#     Name = "obs-security_group"
+#   }
+# }

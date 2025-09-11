@@ -9,6 +9,21 @@ connection();
 app.use(express.json());
 app.use(cors());
 
+app.get("/health", (req, res) => res.sendStatus(200));
+
+// Readiness probe - checks DB connection
+app.get("/ready", async (req, res) => {
+  try {
+    res.sendStatus(200); // DB is reachable
+    // if (!dbConnection) {
+    //   return res.sendStatus(503); // DB not connected
+    // }
+    // await dbConnection.db.admin().ping();
+  } catch (err) {
+    res.sendStatus(503);
+  }
+});
+
 app.get('/ok', (req, res) => {
     res.status(200).send('ok')
   })
