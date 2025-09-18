@@ -52,11 +52,6 @@ jobs:
             token: ${{ secrets.PA_TOKEN }}
             path: gitops
 
-        - name: Update Deployment Images
-          run: |
-            sed -i "s|image: .*app-backend:.*|image: stefnie/app-backend:latest|g" gitops/backend-deployment.yaml
-            sed -i "s|image: .*app-frontend:.*|image: stefnie/app-frontend:latest|g" gitops/frontend-deployment.yaml
-
         # 🔹 Commit changes to GitOps repo
         - name: Commit & Push Changes
           run: |
