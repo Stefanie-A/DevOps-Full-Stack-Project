@@ -1,0 +1,79 @@
+name: ci/cd pipeline
+on:
+    workflow_dispatch:
+
+permissions:
+    contents: read
+    id-token: write
+
+jobs:
+    build-test-push:
+        runs-on: ubuntu-latest
+        steps:
+        - name: Checkout code
+          uses: actions/checkout@v4
+
+        - name: Log in to Docker Hub
+          uses: docker/login-action@v2
+          with:
+            username: ${{ secrets.DOCKERHUB_USERNAME }}
+            password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+        - name: Docker Build Backend and push to docker hub
+          working-directory: Application-Code/backend
+          run: |
+            docker build -t app-backend .
+            docker tag app-backend:latest stefnie/app-backend:latest
+            docker push stefnie/app-backend:latest
+           
+        - name: Docker Build Frontend and push to docker hub
+          working-directory: Application-Code/frontend
+          run: |
+            docker build -t app-frontend .
+            docker tag app-frontend:latest stefnie/app-frontend:latest
+            docker push stefnie/app-frontend:latest
+    
+        - name: Configure AWS Credentials for OIDC
+          uses: aws-actions/configure-aws-credentials@v4.1.0
+          with:
+            audience: sts.amazonaws.com
+            aws-region: us-east-1
+            role-to-assume: arn:aws:iam::902839103466:role/openid-role
+
+        - name: Lint YAML files
+          uses: ibiqlik/action-yamllint@v3
+          with:
+            config_file: .yamllint.yml  # optional, if you add custom rules
+            file_or_dir: ./k8s    
+       
+    deploy:
+      needs: build-test-push
+      runs-on: ubuntu-latest
+      steps:
+        - name: Checkout manifests repo
+          uses: actions/checkout@v4
+          with:
+            repository: Stefanie-A/DevOps-Full-Stack-Project
+            token: ${{ secrets.GITHUB_TOKEN }}
+            path: gitops
+
+        # 🔹 Update manifests (Helm values or K8s manifests)
+        - name: Update Deployment Images
+          run: |
+            sed -i "s|image: .*app-backend:.*|image: stefnie/app-backend:latest|g" gitops/backend/values.yaml
+            sed -i "s|image: .*app-frontend:.*|image: stefnie/app-frontend:latest|g" gitops/frontend/values.yaml
+
+        # 🔹 Commit changes to GitOps repo
+        - name: Commit & Push Changes
+          run: |
+            cd gitops
+            git config user.name "github-actions"
+            git config user.email "github-actions@github.com"
+            git add .
+            git commit -m "Update images to latest"
+            git push
+
+        # 🔹 ArgoCD will auto-sync to EKS
+        - name: Trigger ArgoCD Sync (optional)
+          run: |
+            echo "ArgoCD watching GitOps repo — sync will happen automatically."
