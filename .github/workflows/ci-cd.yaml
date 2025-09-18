@@ -53,8 +53,8 @@ jobs:
         - name: Checkout manifests repo
           uses: actions/checkout@v4
           with:
-            repository: Stefanie-A/DevOps-Full-Stack-Project
-            token: ${{ secrets.GITHUB_TOKEN }}
+            repository: ${{ secrets.REPO_NAME }}
+            token: ${{ secrets.PA_TOKEN }}
             path: gitops
 
         # 🔹 Update manifests (Helm values or K8s manifests)
