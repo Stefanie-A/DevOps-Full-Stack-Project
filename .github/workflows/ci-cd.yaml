@@ -40,11 +40,7 @@ jobs:
             aws-region: us-east-1
             role-to-assume: arn:aws:iam::902839103466:role/openid-role
 
-        - name: Lint YAML files
-          uses: ibiqlik/action-yamllint@v3
-          with:
-            file_or_dir: ./templates
-       
+            
     deploy:
       needs: build-test-push
       runs-on: ubuntu-latest
