@@ -59,7 +59,7 @@ jobs:
             git config user.name "github-actions"
             git config user.email "github-actions@github.com"
             git add .
-            git commit -m "Update images to latest"
+            git commit -m "Update images to latest" || echo "No changes to commit"
             git push
 
         # 🔹 ArgoCD will auto-sync to EKS
