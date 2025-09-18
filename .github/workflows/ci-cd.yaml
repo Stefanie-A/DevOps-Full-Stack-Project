@@ -43,7 +43,7 @@ jobs:
         - name: Lint YAML files
           uses: ibiqlik/action-yamllint@v3
           with:
-            file_or_dir: ./Application-Code/K8s/templates
+            file_or_dir: ./templates
        
     deploy:
       needs: build-test-push
